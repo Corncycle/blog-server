@@ -1,22 +1,22 @@
+require('dotenv').config()
+
 const express = require('express')
 const cors = require('cors')
 const jwt = require('jsonwebtoken')
+const {
+  getNRecentPosts,
+  getPostCountsForAllMonths,
+  getPostTitlesInMonth,
+} = require('./scripts/db')
+
+const knex = require('knex')({
+  client: 'pg',
+  connection: process.env.DATABASE_CONNECTION_STRING,
+})
 
 const app = express()
 
 app.use(cors())
-
-const a1 = {
-  title: 'post-one',
-  description: "this is post one's description",
-  body: 'post one body post one body post one body post one body post one body post one body post one body post one body post one body post one body post one body post one body post one body post one body post one body post one body post one body post one body',
-}
-
-const a2 = {
-  title: 'post-two',
-  description: "this is post two's description",
-  body: 'post two body post two body post two body post two body post two body post two body post two body post two body post two body post two body post two body post two body post two body post two body post two body post two body post two body post two body post two body post two body post two body post two body post two body post two body post two body post two body post two body post two body post two body post two body post two body post two body post two body post two body post two body post two body post two body post two body post two body post two body post two body post two body post two body ',
-}
 
 function getAllPostsDummy() {
   return [a1, a2]
@@ -38,14 +38,26 @@ app.get('/api', (req, res, next) => {
 })
 
 app.get('/api/posts', async (req, res, next) => {
-  setTimeout(() => {
-    res.json(getAllPostsDummy())
-  }, 2000)
+  const b = await getNRecentPosts(knex, 5)
+  res.json(b)
+})
+
+app.get('/api/postsByMonth', async (req, res, next) => {
+  const b = await getPostCountsForAllMonths(knex)
+  res.json(b)
 })
 
 app.get('/api/posts/:post', (req, res, next) => {
   const post = req.params.post
   res.json(getPostDummy(post))
+})
+
+app.get('/api/postsByMonth/:yearmonth', async (req, res, next) => {
+  const yearmonth = Number(req.params.yearmonth)
+  const year = Math.trunc(yearmonth / 100)
+  const month = yearmonth % 100
+  const b = await getPostTitlesInMonth(knex, year, month)
+  res.json(b)
 })
 
 app.listen(3000, () => {
