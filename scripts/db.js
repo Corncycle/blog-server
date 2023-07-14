@@ -37,6 +37,11 @@ exports.getPostTitlesInMonth = async (knex, year, month) => {
   return data
 }
 
-exports.getPostBySlug = async (knex, n) => {
-  throw new Error('Unimplemented')
+exports.getPostBySlug = async (knex, slug) => {
+  const data = await knex
+    .select('*')
+    .from('posts')
+    .where(knex.raw(`posts.slug = '${slug}'`))
+    .limit(1)
+  return data.length ? data[0] : {}
 }

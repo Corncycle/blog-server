@@ -7,6 +7,7 @@ const {
   getNRecentPosts,
   getPostCountsForAllMonths,
   getPostTitlesInMonth,
+  getPostBySlug,
 } = require('./scripts/db')
 
 const knex = require('knex')({
@@ -17,19 +18,6 @@ const knex = require('knex')({
 const app = express()
 
 app.use(cors())
-
-function getAllPostsDummy() {
-  return [a1, a2]
-}
-
-function getPostDummy(title) {
-  for (const post of [a1, a2]) {
-    if (post.title === title) {
-      return post
-    }
-  }
-  return { error: 'could not find post' }
-}
 
 app.get('/api', (req, res, next) => {
   res.json({
@@ -47,12 +35,30 @@ app.get('/api/postsByMonth', async (req, res, next) => {
   res.json(b)
 })
 
-app.get('/api/posts/:post', (req, res, next) => {
-  const post = req.params.post
-  res.json(getPostDummy(post))
+app.get('/api/posts/:post', async (req, res, next) => {
+  const slug = req.params.post
+  if (!/^[a-z0-9\-]+$/.test(slug) || slug.length > 100) {
+    return res.json({
+      error:
+        'Searches for a post by slug can only contain lowercase letters and hyphens (eg. /api/posts/example-post)',
+    })
+  }
+
+  const b = await getPostBySlug(knex, slug)
+  res.json(b)
 })
 
 app.get('/api/postsByMonth/:yearmonth', async (req, res, next) => {
+  if (
+    !/^\d+$/.test(req.params.yearmonth) ||
+    req.params.yearmonth.length !== 6
+  ) {
+    return res.json({
+      error:
+        'Searches for posts in a month must consist of 6 digits (eg. /api/postsByMonth/202011 for November, 2020)',
+    })
+  }
+
   const yearmonth = Number(req.params.yearmonth)
   const year = Math.trunc(yearmonth / 100)
   const month = yearmonth % 100
