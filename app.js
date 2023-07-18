@@ -8,6 +8,7 @@ const {
   getPostCountsForAllMonths,
   getPostTitlesInMonth,
   getPostBySlug,
+  createPost,
 } = require('./scripts/db')
 
 const knex = require('knex')({
@@ -17,6 +18,7 @@ const knex = require('knex')({
 
 const app = express()
 
+app.use(express.json())
 app.use(cors())
 
 app.get('/api', (req, res, next) => {
@@ -28,6 +30,42 @@ app.get('/api', (req, res, next) => {
 app.get('/api/posts', async (req, res, next) => {
   const b = await getNRecentPosts(knex, 5)
   res.json(b)
+})
+
+app.post('/api/posts/new', async (req, res, next) => {
+  if (
+    !req.body ||
+    req.body.authorization !== process.env.SECRET_AUTHORIZATION_KEY
+  ) {
+    return res.json({ error: 'Invalid authorization' })
+  }
+
+  if (
+    !req.body.slug ||
+    !/^[a-z0-9\-]+$/.test(req.body.slug) ||
+    req.body.slug.length > 100
+  ) {
+    return res.json({
+      error:
+        'Slugs may only contain alphanumeric characters and hyphens, and must be at most 100 characters long',
+    })
+  }
+
+  try {
+    await createPost(
+      knex,
+      req.body.title,
+      req.body.slug,
+      req.body.subtitle,
+      req.body.body,
+      new Date(),
+    )
+    return res.json({
+      message: `Successfully created post with slug '${req.body.slug}'`,
+    })
+  } catch (err) {
+    return res.json({ error: err.message })
+  }
 })
 
 app.get('/api/postsByMonth', async (req, res, next) => {

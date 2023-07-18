@@ -1,5 +1,9 @@
 exports.getNRecentPosts = async (knex, n) => {
-  const posts = await knex.select('*').from('posts').limit(n)
+  const posts = await knex
+    .select('*')
+    .from('posts')
+    .orderBy('created_at', 'desc')
+    .limit(n)
   return posts
 }
 
@@ -44,4 +48,21 @@ exports.getPostBySlug = async (knex, slug) => {
     .where(knex.raw(`posts.slug = '${slug}'`))
     .limit(1)
   return data.length ? data[0] : {}
+}
+
+exports.createPost = async (knex, title, slug, subtitle, body, createdAt) => {
+  if (!title || !slug || !subtitle || !body || !createdAt) {
+    throw new Error('All fields are mandatory')
+  }
+  const checkSlug = await this.getPostBySlug(knex, slug)
+  if (Object.keys(checkSlug).length > 0) {
+    throw new Error(`Post with slug '${slug}' already exists`)
+  }
+  const attempt = await knex('posts').insert({
+    title,
+    slug,
+    subtitle,
+    body,
+    created_at: createdAt,
+  })
 }
