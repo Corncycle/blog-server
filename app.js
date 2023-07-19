@@ -19,6 +19,11 @@ const knex = require('knex')({
 const app = express()
 
 app.use(express.json())
+
+const permittedAddress =
+  process.env.ENVIRONMENT === 'development'
+    ? 'http://localhost:5000'
+    : 'https://blog.calebstromberg.com'
 app.use(cors())
 
 app.get('/api', (req, res, next) => {
