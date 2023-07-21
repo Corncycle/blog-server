@@ -30,7 +30,7 @@ app.use(logger('dev'))
 
 app.get('/', (req, res, next) => {
   res.json({
-    message: 'Welcome the the API',
+    message: 'Welcome to the API',
   })
 })
 
