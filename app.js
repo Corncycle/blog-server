@@ -3,6 +3,7 @@ require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
 const jwt = require('jsonwebtoken')
+const logger = require('morgan')
 const {
   getNRecentPosts,
   getPostCountsForAllMonths,
@@ -25,19 +26,20 @@ const permittedAddress =
     ? 'http://localhost:5000'
     : 'https://blog.calebstromberg.com'
 app.use(cors())
+app.use(logger('dev'))
 
-app.get('/api', (req, res, next) => {
+app.get('/', (req, res, next) => {
   res.json({
     message: 'Welcome the the API',
   })
 })
 
-app.get('/api/posts', async (req, res, next) => {
+app.get('/posts', async (req, res, next) => {
   const b = await getNRecentPosts(knex, 5)
   res.json(b)
 })
 
-app.post('/api/posts/new', async (req, res, next) => {
+app.post('/posts/new', async (req, res, next) => {
   if (
     !req.body ||
     req.body.authorization !== process.env.SECRET_AUTHORIZATION_KEY
@@ -73,12 +75,12 @@ app.post('/api/posts/new', async (req, res, next) => {
   }
 })
 
-app.get('/api/postsByMonth', async (req, res, next) => {
+app.get('/postsByMonth', async (req, res, next) => {
   const b = await getPostCountsForAllMonths(knex)
   res.json(b)
 })
 
-app.get('/api/posts/:post', async (req, res, next) => {
+app.get('/posts/:post', async (req, res, next) => {
   const slug = req.params.post
   if (!/^[a-z0-9\-]+$/.test(slug) || slug.length > 100) {
     return res.json({
@@ -91,7 +93,7 @@ app.get('/api/posts/:post', async (req, res, next) => {
   res.json(b)
 })
 
-app.get('/api/postsByMonth/:yearmonth', async (req, res, next) => {
+app.get('/postsByMonth/:yearmonth', async (req, res, next) => {
   if (
     !/^\d+$/.test(req.params.yearmonth) ||
     req.params.yearmonth.length !== 6
