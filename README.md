@@ -1,8 +1,8 @@
 # blog-server
 
-A simple Express-based CRUD API for use at my blog, https://blog.calebstromberg.com
+A simple Express-based CRUD API for use at my blog, https://blog.corncycle.com
 
-The API itself is hosted on fly.io and can be accessed through the browser or a tool like Postman at https://api.calebstromberg.com
+The API itself is hosted on fly.io and can be accessed through the browser or a tool like Postman at https://api.corncycle.com
 
 # Responses
 
@@ -14,4 +14,4 @@ Requests that result in a successful create/update/delete will receive a respons
 
 Successful read requests will receive the requested resource in JSON format.
 
-Resource paths can be obtained by peeking at the source code for the blog client or by monitoring network requests made by the blog client. I don't care to make them any more public than that, because this API is only intended to serve my blog.
+Resource paths can be obtained by peeking at the source code for the blog client or by monitoring its network requests (but there should be no need to access the API outside of the web client).
