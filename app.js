@@ -24,7 +24,7 @@ app.use(express.json())
 const permittedAddress =
   process.env.ENVIRONMENT === 'development'
     ? 'http://localhost:5000'
-    : 'https://blog.calebstromberg.com'
+    : 'https://blog.corncycle.com'
 app.use(cors())
 app.use(logger('dev'))
 
