@@ -15,6 +15,10 @@ const {
 const knex = require('knex')({
   client: 'pg',
   connection: process.env.DATABASE_CONNECTION_STRING,
+  pool: {
+    min: 0,
+    max: process.env.ENVIRONMENT === 'development' ? 1 : 2,
+  },
 })
 
 const app = express()
