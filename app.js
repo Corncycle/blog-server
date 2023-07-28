@@ -10,6 +10,7 @@ const {
   getPostTitlesInMonth,
   getPostBySlug,
   createPost,
+  updatePost,
 } = require('./scripts/db')
 
 const knex = require('knex')({
@@ -39,8 +40,12 @@ app.get('/', (req, res, next) => {
 })
 
 app.get('/posts', async (req, res, next) => {
-  const b = await getNRecentPosts(knex, 5)
-  res.json(b)
+  try {
+    const b = await getNRecentPosts(knex, 5)
+    res.json(b)
+  } catch (err) {
+    return res.json({ error: 'Failed to connect to database' })
+  }
 })
 
 app.post('/posts/new', async (req, res, next) => {
@@ -70,6 +75,7 @@ app.post('/posts/new', async (req, res, next) => {
       req.body.subtitle,
       req.body.body,
       new Date(),
+      req.body.rawbody,
     )
     return res.json({
       message: `Successfully created post with slug '${req.body.slug}'`,
@@ -80,8 +86,12 @@ app.post('/posts/new', async (req, res, next) => {
 })
 
 app.get('/postsByMonth', async (req, res, next) => {
-  const b = await getPostCountsForAllMonths(knex)
-  res.json(b)
+  try {
+    const b = await getPostCountsForAllMonths(knex)
+    return res.json(b)
+  } catch (err) {
+    return res.json({ error: 'Failed to connect to database' })
+  }
 })
 
 app.get('/posts/:post', async (req, res, next) => {
@@ -93,8 +103,35 @@ app.get('/posts/:post', async (req, res, next) => {
     })
   }
 
-  const b = await getPostBySlug(knex, slug)
-  res.json(b)
+  try {
+    const b = await getPostBySlug(knex, slug)
+    res.json(b)
+  } catch (err) {
+    return res.json({ error: 'Failed to connect to database' })
+  }
+})
+
+app.patch('/posts/:post', async (req, res, next) => {
+  if (
+    !req.body ||
+    req.body.authorization !== process.env.SECRET_AUTHORIZATION_KEY
+  ) {
+    return res.json({ error: 'Invalid authorization' })
+  }
+  try {
+    await updatePost(
+      knex,
+      req.body.slug,
+      req.body.subtitle,
+      req.body.body,
+      req.body.rawbody,
+    )
+    return res.json({
+      message: `Successfully updated post with slug '${req.body.slug}'`,
+    })
+  } catch (err) {
+    return res.json({ error: err.message })
+  }
 })
 
 app.get('/postsByMonth/:yearmonth', async (req, res, next) => {
@@ -111,8 +148,12 @@ app.get('/postsByMonth/:yearmonth', async (req, res, next) => {
   const yearmonth = Number(req.params.yearmonth)
   const year = Math.trunc(yearmonth / 100)
   const month = yearmonth % 100
-  const b = await getPostTitlesInMonth(knex, year, month)
-  res.json(b)
+  try {
+    const b = await getPostTitlesInMonth(knex, year, month)
+    res.json(b)
+  } catch (err) {
+    return res.json({ error: 'Failed to connect to database' })
+  }
 })
 
 app.listen(3000, () => {

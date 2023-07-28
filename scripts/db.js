@@ -50,8 +50,16 @@ exports.getPostBySlug = async (knex, slug) => {
   return data.length ? data[0] : {}
 }
 
-exports.createPost = async (knex, title, slug, subtitle, body, createdAt) => {
-  if (!title || !slug || !subtitle || !body || !createdAt) {
+exports.createPost = async (
+  knex,
+  title,
+  slug,
+  subtitle,
+  body,
+  createdAt,
+  rawbody,
+) => {
+  if (!title || !slug || !subtitle || !body || !createdAt || !rawbody) {
     throw new Error('All fields are mandatory')
   }
   const checkSlug = await this.getPostBySlug(knex, slug)
@@ -64,5 +72,23 @@ exports.createPost = async (knex, title, slug, subtitle, body, createdAt) => {
     subtitle,
     body,
     created_at: createdAt,
+    rawbody,
   })
+}
+
+exports.updatePost = async (knex, slug, subtitle, body, rawbody) => {
+  if (!slug || !subtitle || !body || !rawbody) {
+    throw new Error('All fields are mandatory')
+  }
+  const checkSlug = await this.getPostBySlug(knex, slug)
+  if (Object.keys(checkSlug).length === 0) {
+    throw new Error(`No post with slug '${slug}' found`)
+  }
+  const attempt = await knex('posts')
+    .update({
+      subtitle,
+      body,
+      rawbody,
+    })
+    .where(knex.raw(`posts.id = '${checkSlug.id}'`))
 }
