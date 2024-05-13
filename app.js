@@ -12,6 +12,7 @@ const {
   createPost,
   updatePost,
 } = require('./scripts/db')
+const { assessToken } = require('./scripts/util')
 
 const knex = require('knex')({
   client: 'pg',
@@ -49,11 +50,18 @@ app.get('/posts', async (req, res, next) => {
 })
 
 app.post('/posts/new', async (req, res, next) => {
-  if (
-    !req.body ||
-    req.body.authorization !== process.env.SECRET_AUTHORIZATION_KEY
-  ) {
-    return res.json({ error: 'Invalid authorization' })
+  const assessment = await assessToken(req.body.jwt)
+
+  if (!assessment.valid) {
+    return res.json({
+      error: 'Invalid token, try logging in through Google again',
+    })
+  }
+
+  if (!assessment.admin) {
+    return res.json({
+      error: 'This account does not have permission to create posts',
+    })
   }
 
   if (
@@ -112,16 +120,25 @@ app.get('/posts/:post', async (req, res, next) => {
 })
 
 app.patch('/posts/:post', async (req, res, next) => {
-  if (
-    !req.body ||
-    req.body.authorization !== process.env.SECRET_AUTHORIZATION_KEY
-  ) {
-    return res.json({ error: 'Invalid authorization' })
+  const assessment = await assessToken(req.body.jwt)
+
+  if (!assessment.valid) {
+    return res.json({
+      error: 'Invalid token, try logging in through Google again',
+    })
   }
+
+  if (!assessment.admin) {
+    return res.json({
+      error: 'This account does not have permission to update posts',
+    })
+  }
+
   try {
     await updatePost(
       knex,
       req.body.slug,
+      req.body.title,
       req.body.subtitle,
       req.body.body,
       req.body.rawbody,

@@ -76,19 +76,25 @@ exports.createPost = async (
   })
 }
 
-exports.updatePost = async (knex, slug, subtitle, body, rawbody) => {
-  if (!slug || !subtitle || !body || !rawbody) {
+exports.updatePost = async (knex, slug, title, subtitle, body, rawbody) => {
+  if (!slug || !title || !subtitle || !body || !rawbody) {
     throw new Error('All fields are mandatory')
   }
   const checkSlug = await this.getPostBySlug(knex, slug)
   if (Object.keys(checkSlug).length === 0) {
     throw new Error(`No post with slug '${slug}' found`)
   }
-  const attempt = await knex('posts')
-    .update({
-      subtitle,
-      body,
-      rawbody,
-    })
-    .where(knex.raw(`posts.id = '${checkSlug.id}'`))
+
+  try {
+    const attempt = await knex('posts')
+      .update({
+        title,
+        subtitle,
+        body,
+        rawbody,
+      })
+      .where(knex.raw(`posts.id = '${checkSlug.id}'`))
+  } catch (e) {
+    console.log(`Failed to update post: ${e}`)
+  }
 }
