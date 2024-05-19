@@ -5,12 +5,15 @@ const cors = require('cors')
 const jwt = require('jsonwebtoken')
 const logger = require('morgan')
 const {
-  getNRecentPosts,
+  getNRecentPostBlurbs,
   getPostCountsForAllMonths,
   getPostTitlesInMonth,
-  getPostBySlug,
-  createPost,
+  getPostDisplayBySlug,
+  getPostFullBySlug,
+  insertPost,
   updatePost,
+  getComments,
+  insertComment,
 } = require('./scripts/db')
 const { assessToken } = require('./scripts/util')
 
@@ -42,7 +45,7 @@ app.get('/', (req, res, next) => {
 
 app.get('/posts', async (req, res, next) => {
   try {
-    const b = await getNRecentPosts(knex, 5)
+    const b = await getNRecentPostBlurbs(knex, 5)
     res.json(b)
   } catch (err) {
     return res.json({ error: 'Failed to connect to database' })
@@ -76,14 +79,16 @@ app.post('/posts/new', async (req, res, next) => {
   }
 
   try {
-    await createPost(
+    await insertPost(
       knex,
-      req.body.title,
       req.body.slug,
-      req.body.subtitle,
-      req.body.body,
+      req.body.titleHtml,
+      req.body.titleMd,
+      req.body.blurbHtml,
+      req.body.blurbMd,
+      req.body.bodyHtml,
+      req.body.bodyMD,
       new Date(),
-      req.body.rawbody,
     )
     return res.json({
       message: `Successfully created post with slug '${req.body.slug}'`,
@@ -112,7 +117,7 @@ app.get('/posts/:post', async (req, res, next) => {
   }
 
   try {
-    const b = await getPostBySlug(knex, slug)
+    const b = await getPostFullBySlug(knex, slug)
     res.json(b)
   } catch (err) {
     return res.json({ error: 'Failed to connect to database' })
@@ -138,13 +143,70 @@ app.patch('/posts/:post', async (req, res, next) => {
     await updatePost(
       knex,
       req.body.slug,
-      req.body.title,
-      req.body.subtitle,
-      req.body.body,
-      req.body.rawbody,
+      req.body.titleHtml,
+      req.body.titleMd,
+      req.body.blurbHtml,
+      req.body.blurbMd,
+      req.body.bodyHtml,
+      req.body.bodyMd,
     )
     return res.json({
       message: `Successfully updated post with slug '${req.body.slug}'`,
+    })
+  } catch (err) {
+    return res.json({ error: err.message })
+  }
+})
+
+app.get('/posts/:post/comments', async (req, res, next) => {
+  const slug = req.params.post
+  if (!/^[a-z0-9\-]+$/.test(slug) || slug.length > 100) {
+    return res.json({
+      error:
+        'Searches for a post by slug can only contain lowercase letters and hyphens (eg. /api/posts/example-post)',
+    })
+  }
+
+  try {
+    const b = await getComments(knex, slug)
+    res.json(b)
+  } catch (err) {
+    return res.json({ error: 'Failed to connec to database' })
+  }
+})
+
+app.post('/posts/:post/comments', async (req, res, next) => {
+  const assessment = await assessToken(req.body.jwt)
+
+  if (!assessment.valid) {
+    return res.json({
+      error: 'Invalid token, try logging in through Google again',
+    })
+  }
+
+  if (
+    !req.body.postSlug ||
+    !/^[a-z0-9\-]+$/.test(req.body.postSlug) ||
+    req.body.postSlug.length > 100
+  ) {
+    return res.json({
+      error:
+        'Slugs may only contain alphanumeric characters and hyphens, and must be at most 100 characters long',
+    })
+  }
+
+  try {
+    await insertComment(
+      knex,
+      req.body.postSlug,
+      req.body.displayName,
+      req.body.email,
+      req.body.picture,
+      req.body.body,
+      new Date(),
+    )
+    return res.json({
+      message: `Successfully created comment on post with slug '${req.body.postSlug}'`,
     })
   } catch (err) {
     return res.json({ error: err.message })

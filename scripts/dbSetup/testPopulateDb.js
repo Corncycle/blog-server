@@ -32,7 +32,7 @@ const createPostObject = (
 }
 
 const createCommentObject = (
-  postId,
+  postSlug,
   displayName,
   email,
   picture,
@@ -40,7 +40,7 @@ const createCommentObject = (
   createdAt = new Date(),
 ) => {
   return {
-    post_id: postId,
+    post_slug: postSlug,
     display_name: displayName,
     email,
     picture,
@@ -69,7 +69,7 @@ const createCommentObject = (
     try {
       await knex('comment').insert(
         createCommentObject(
-          3,
+          'post-3',
           'Doug',
           'doug@gmail.com',
           'https://lh3.googleusercontent.com/a/ACg8ocLrgEpYg0KekeUmDqiR0iQxrTMt4PMt_vXqSXya2lelGk4ZQ34R=s96-c',
